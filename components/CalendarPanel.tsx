@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 // El Calendar ID y la zona horaria son públicos (van en el iframe de Google).
 const CALENDAR_ID =
   process.env.NEXT_PUBLIC_CALENDAR_ID ??
-  "bfaad59e7c27fa2f95b73e16fd2e48aa5a4ac0e8f891dc83acb179a5a15b5361@group.calendar.google.com";
+  "5fe97a2ec3883c82f211fe8f7eec1ef2578b5e22a2fb9ff1b93541bc9152e2fc@group.calendar.google.com";
 const TZ = process.env.NEXT_PUBLIC_CALENDAR_TZ ?? "Europe/Madrid";
 
 type ViewMode = "WEEK" | "AGENDA" | "MONTH";
