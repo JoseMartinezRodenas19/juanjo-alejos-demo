@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Juanjo Alejos · Fisioterapia Avanzada — Demo del asistente
 
-## Getting Started
+Frontend de demostración para enseñar al cliente el asistente de WhatsApp:
+un **chat** para interactuar con el bot y un **Google Calendar embebido** que
+muestra en (casi) tiempo real cómo el bot agenda / reagenda / cancela citas.
 
-First, run the development server:
+- **Framework:** Next.js 16 (App Router) + Tailwind v4 · desplegable en Vercel.
+- **Chat:** `app/api/chat/route.ts` hace de proxy seguro al webhook de n8n.
+- **Calendario:** iframe oficial de Google Calendar (`components/CalendarPanel.tsx`).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Arquitectura
+
+```
+[ Navegador ]
+   ├─ Chat  ── POST /api/chat ──▶ (servidor Next) ── POST ──▶ n8n webhook /chat-web
+   │                                                            └─ POLICIA → AGENDADOR/CONVERSACION/TROL
+   │                                                            └─ Respond to Webhook → { messages: [...] }
+   └─ <iframe> Google Calendar (calendario del fisio, público)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+El workflow de n8n que atiende la web es **`FISIO — WEB DEMO`** (id `5UKGhpjBCAEuvP2z`),
+SEPARADO del de producción (`FISIO`, id `x9osM0nCgF9wOGE2`). Reutiliza los mismos
+agentes y sub-workflows (disponibilidad / agendamiento / reagendador / consultar
+citas) y el mismo Google Calendar + tabla `citas`, pero responde de forma síncrona
+y sin Redis ni WhatsApp.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> ⚠️ Las citas que se creen en la demo son **reales** (se ven en tu Calendar). Bórralas
+> por el propio bot al terminar la demo para no descuadrar la agenda.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Variables de entorno
 
-## Learn More
+Copia `.env.example` a `.env.local` y rellena:
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Qué es | ¿Pública? |
+|---|---|---|
+| `N8N_WEBHOOK_URL` | URL del webhook `chat-web` en n8n | No (solo servidor) |
+| `NEXT_PUBLIC_CALENDAR_ID` | Calendar ID del fisio (debe ser público) | Sí |
+| `NEXT_PUBLIC_CALENDAR_TZ` | Zona horaria (`Europe/Madrid`) | Sí |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Desarrollo local
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
 
-## Deploy on Vercel
+## El logo
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Sustituye `public/logo.svg` (placeholder) por el logo real de Juanjo Alejos.
+Si lo dejas como `logo.png`/`logo.jpg`, actualiza la ruta en `components/Header.tsx`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy en Vercel
+
+1. Sube esta carpeta `frontend/` a un repositorio de GitHub (o usa Vercel CLI).
+2. En [vercel.com](https://vercel.com) → **Add New… → Project** → importa el repo.
+   - **Root Directory:** `frontend` (si subes todo el proyecto) o la raíz (si solo subes esta carpeta).
+   - Framework: Next.js (autodetectado).
+3. En **Environment Variables** añade las 3 variables de arriba
+   (con los valores de tu `.env.local`).
+4. **Deploy**. Vercel te da una URL `https://...vercel.app`.
+
+> El calendario debe estar **público** en Google Calendar para que se vea en el iframe
+> (Configuración del calendario → *Permisos de acceso* → Hacer público).
